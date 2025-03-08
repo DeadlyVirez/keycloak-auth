@@ -8,6 +8,19 @@ This project demonstrates the implementation of identity brokering in Keycloak w
 - Implementation of a Node.js application with OpenID Connect
 - Transmission of user roles and claims from Dex through Keycloak to the application
 
+## To-Do
+
+- [x] Implement working Keycloak + realm configuration
+- [x] Implement example app to test login flow
+- [x] Implement hashing script for Dex passwords
+- [x] Create working Dex instance + config
+- [x] Use version-pinning
+- [ ] Implement role mapping from Dex JWT token
+- [ ] Fix wrong callback/auth URL (possibly related to Docker deployment)
+- [ ] Check user creation and registration process
+- [ ] Check if role mapping works correctly
+- [ ] Check if users get created as duplicates
+
 ## Architecture
 
 ```plaintext
