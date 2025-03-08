@@ -9,11 +9,12 @@
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "secret": "your-client-secret",
-      "redirectUris": ["*"],
+      "redirectUris": ["http://localhost:3000/auth/callback"],
       "webOrigins": ["*"],
       "publicClient": false,
       "protocol": "openid-connect",
-      "directAccessGrantsEnabled": true
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true
     }
   ],
   "users": [
@@ -52,10 +53,10 @@
         "clientId": "example-app",
         "clientSecret": "example-secret",
         "authorizationUrl": "http://localhost:5556/auth",
-        "tokenUrl": "http://dex:5556/token",
-        "userInfoUrl": "http://dex:5556/userinfo",
-        "jwksUrl": "http://dex:5556/.well-known/jwks.json",
-        "issuer": "http://dex:5556"
+        "tokenUrl": "http://localhost:5556/token",
+        "userInfoUrl": "http://localhost:5556/userinfo",
+        "jwksUrl": "http://localhost:5556/.well-known/jwks.json",
+        "issuer": "http://localhost:5556"
       }
     }
   ]
