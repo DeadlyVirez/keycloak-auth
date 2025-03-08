@@ -1,16 +1,14 @@
-version: '3.8'
-
+---
 services:
   keycloak-db:
     image: postgres:15
     container_name: keycloak-db
-    restart: unless-stopped
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak
     volumes:
-      - keycloak-db-data:/var/lib/postgresql/data
+      - keycloak-db:/var/lib/postgresql/data
     networks:
       - keycloak-network
 
@@ -37,8 +35,15 @@ services:
       - ./keycloak-realm.json:/opt/keycloak/data/import/keycloak-realm.json
     ports:
       - "8080:8080"
-    networks:
-      - keycloak-network
+
+  dex:
+    image: ghcr.io/dexidp/dex:v2.35.3
+    container_name: dex
+    ports:
+      - "5556:5556"
+    volumes:
+      - ./dex-config.yaml:/etc/dex/config.yaml
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
 
   app:
     build: .
@@ -46,6 +51,7 @@ services:
     restart: unless-stopped
     depends_on:
       - keycloak
+      - dex
     environment:
       KEYCLOAK_BASE_URL: http://keycloak:8080
       KEYCLOAK_REALM: example-realm
@@ -59,7 +65,7 @@ services:
       - keycloak-network
 
 volumes:
-  keycloak-db-data:
+  keycloak-db:
 
 networks:
   keycloak-network:

@@ -1,0 +1,27 @@
+issuer: http://dex:5556
+
+web:
+  http: 0.0.0.0:5556
+
+storage:
+  type: sqlite3
+  config:
+    file: /etc/dex/dex.db
+
+staticClients:
+  - id: example-app
+    secret: example-secret
+    name: "Example App"
+    redirectURIs:
+      - "http://localhost:3000/auth/callback"
+
+enablePasswordDB: true
+
+staticPasswords:
+  - email: "test@example.com"
+    hash: "$2y$12$hX1sW6zblYjT1QFzI7.pju2hiRT/txYXcFof.9x7.rPqokRoHEeqe" # bcrypt hash for "password"
+    username: "testuser"
+    userID: "1234"
+    groups:
+      - admin
+      - user
