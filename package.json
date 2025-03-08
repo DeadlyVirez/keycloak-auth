@@ -1,6 +1,6 @@
 {
   "name": "keycloak-auth",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Simple Keycloak identity brokering example app stack",
   "main": "app.js",
   "type": "module",
