@@ -17,7 +17,7 @@ services:
     networks:
       - keycloak-network
     volumes:
-      - ./realm.json:/opt/keycloak/data/import/realm.json
+      - ./docker/keycloak/realm.json:/opt/keycloak/data/import/realm.json
     healthcheck:
       test: ["CMD", "curl", "-f", "http://keycloak:8080/auth/realms/example-realm"]
       interval: 10s
@@ -62,7 +62,7 @@ services:
     ports:
       - "5556:5556"
     volumes:
-      - ./dex-config.yaml:/etc/dex/config.yaml
+      - ./docker/dex/dex-config.yaml:/etc/dex/config.yaml
     command: ["dex", "serve", "/etc/dex/config.yaml"]
     networks:
       - keycloak-network
