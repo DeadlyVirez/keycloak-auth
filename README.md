@@ -65,7 +65,7 @@ docker-compose logs -f keycloak-health
 
 ```bash
 # Dependencies installieren
-npm install
+npm ci
 
 # Im Entwicklungsmodus starten
 npm run dev

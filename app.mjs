@@ -52,13 +52,6 @@ async function configureOIDC() {
     const keycloakIssuer = await Issuer.discover(issuerUrl);
     console.log('Keycloak Issuer gefunden:', keycloakIssuer.metadata.issuer);
     
-    const client = new keycloakIssuer.Client({
-      client_id: process.env.KEYCLOAK_CLIENT_ID,
-      client_secret: process.env.KEYCLOAK_CLIENT_SECRET,
-      redirect_uris: [process.env.CALLBACK_URL],
-      response_types: ['code']
-    });
-
     passport.use('keycloak',
       new Strategy(
         {
@@ -69,9 +62,13 @@ async function configureOIDC() {
           clientID: process.env.KEYCLOAK_CLIENT_ID,
           clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
           callbackURL: process.env.CALLBACK_URL,
-          scope: 'openid profile email'
+          scope: 'openid profile email',
+          // Zusätzliche Debug-Optionen
+          passReqToCallback: true,
+          proxy: true
         },
-        (issuer, sub, profile, jwtClaims, accessToken, refreshToken, done) => {
+        (req, issuer, sub, profile, jwtClaims, accessToken, refreshToken, done) => {
+          console.log('Auth Callback erreicht mit Profil:', profile);
           profile.accessToken = accessToken;
           profile.refreshToken = refreshToken;
           profile.jwtClaims = jwtClaims;
@@ -80,12 +77,12 @@ async function configureOIDC() {
       )
     );
 
-    return { client, generators };
+    return { client: keycloakIssuer.Client };
   } catch (error) {
     console.error('OIDC Konfigurationsfehler:', error);
     if (error.response) {
       console.error('Response Status:', error.response.status);
-      console.error('Response Body:', error.response.data);
+      console.error('Response Body:', await error.response.text());
     }
     throw error;
   }
@@ -112,15 +109,25 @@ app.get('/login', (req, res, next) => {
   passport.authenticate('keycloak')(req, res, next);
 });
 
+// Debug Route für OAuth Callback
 app.get('/auth/callback', 
   (req, res, next) => {
+    console.log('Auth Callback erreicht mit Query:', req.query);
     passport.authenticate('keycloak', { 
       failureRedirect: '/',
-      failureMessage: true
+      failureMessage: true,
+      // Debug Optionen
+      session: true,
+      failWithError: true
     })(req, res, next);
   },
   (req, res) => {
+    console.log('Auth erfolgreich, User:', req.user);
     res.redirect('/protected');
+  },
+  (error, req, res, next) => {
+    console.error('Auth Fehler:', error);
+    res.redirect('/');
   }
 );
 
