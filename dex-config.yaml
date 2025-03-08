@@ -13,7 +13,7 @@ staticClients:
     secret: example-secret
     name: "Example App"
     redirectURIs:
-      - "http://localhost:3000/auth/callback"
+      - "http://localhost:8080/auth/realms/example-realm/broker/dex-siam-mock/endpoint"
 
 enablePasswordDB: true
 

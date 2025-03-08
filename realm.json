@@ -1,0 +1,62 @@
+{
+  "id": "example-realm",
+  "realm": "example-realm",
+  "enabled": true,
+  "displayName": "Example Realm",
+  "clients": [
+    {
+      "clientId": "example-app",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "your-client-secret",
+      "redirectUris": ["http://example-app:3000/auth/callback"],
+      "webOrigins": ["http://example-app:3000"],
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "directAccessGrantsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testpassword",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Basic user role",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  },
+  "identityProviders": [
+    {
+      "alias": "dex-siam-mock",
+      "providerId": "oidc",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "external-client-id",
+        "clientSecret": "external-client-secret",
+        "authorizationUrl": "http://localhost:5556/auth",
+        "tokenUrl": "http://localhost:5556/token",
+        "userInfoUrl": "http://localhost:5556/userinfo",
+        "jwksUrl": "http://localhost:5556/.well-known/jwks.json",
+        "issuer": "http://localhost:5556"
+      }
+    }
+  ]
+}
