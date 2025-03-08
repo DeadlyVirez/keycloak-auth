@@ -153,5 +153,5 @@
     "start": "node app.mjs"
   },
   "author": "Dillon Gortmaker",
-  "license": "ISC"
+  "license": "MIT"
 }
