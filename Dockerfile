@@ -10,11 +10,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy the rest of the application code
-COPY . .
+# Copy the entire source directory
+COPY src/ ./src/
 
 # Expose the port the app runs on
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "app.mjs"]
+CMD ["node", "src/app.mjs"]

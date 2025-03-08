@@ -36,8 +36,8 @@ services:
       /bin/sh -c '
       while true; do
         if curl -sf http://keycloak:8080/auth/realms/example-realm > /dev/null; then
-          echo "Realm found, wait 5 seconds for Keycloak to stabilize..."
-          sleep 5
+          echo "Realm found, wait 3 seconds for Keycloak to stabilize..."
+          sleep 3
           
           # Final Check
           if curl -sf http://keycloak:8080/auth/realms/example-realm > /dev/null; then
