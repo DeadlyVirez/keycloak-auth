@@ -4,7 +4,6 @@ import session from 'express-session';
 import passport from 'passport';
 import { Strategy } from 'passport-openidconnect';
 import helmet from 'helmet';
-import config from './config.json' assert { type: 'json' };
 
 dotenv.config();
 
