@@ -1,14 +1,14 @@
 # Keycloak Identity Brokering Demo
 
-## Über das Projekt
-Dieses Projekt demonstriert die Implementierung von Identity Brokering in Keycloak mit Dex als externem Identity Provider (IdP). Es zeigt:
+## About the Project
+This project demonstrates the implementation of identity brokering in Keycloak with Dex as an external Identity Provider (IdP). It shows:
 
-- Konfiguration von Keycloak als Service Provider (SP)
-- Einrichtung von Dex als Identity Provider
-- Implementierung einer Node.js Anwendung mit OpenID Connect
-- Übermittlung von Benutzerrollen und Claims von Dex über Keycloak zur Anwendung
+- Configuration of Keycloak as a Service Provider (SP)
+- Setup of Dex as an Identity Provider
+- Implementation of a Node.js application with OpenID Connect
+- Transmission of user roles and claims from Dex through Keycloak to the application
 
-## Architektur
+## Architecture
 
 ```plaintext
 +-------------+     +-----------+     +---------+
@@ -17,118 +17,118 @@ Dieses Projekt demonstriert die Implementierung von Identity Brokering in Keyclo
 +-------------+     +-----------+     +---------+
 ```
 
-## Voraussetzungen
+## Prerequisites
 
-- Docker und Docker Compose
+- Docker and Docker Compose
 - Node.js 18+
 - Git
 
 ## Installation
 
-1. Repository klonen:
+1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/keycloak-auth
 cd keycloak-auth
 ```
 
-2. Services starten:
+2. Start the services:
 ```bash
 docker-compose up -d
 ```
 
-3. Warten bis alle Services gestartet sind:
+3. Wait until all services are started:
 ```bash
 docker-compose logs -f keycloak-health
 ```
 
-## Keycloak Konfiguration
+## Keycloak Configuration
 
-1. Keycloak Admin Console aufrufen: http://localhost:8080
-2. Einloggen mit admin/admin
-3. Zu "Identity Providers" navigieren
-4. Neuen Provider "Dex" hinzufügen
-5. Konfigurieren:
-   - Client ID: keycloak
-   - Client Secret: dex-secret
-   - Authorization URL: http://dex:5556/dex/auth
-   - Token URL: http://dex:5556/dex/token
+1. Open Keycloak Admin Console: http://localhost:8080
+2. Log in with admin/admin
+3. Navigate to "Identity Providers"
+4. Add a new provider "Dex"
+5. Configure:
+    - Client ID: keycloak
+    - Client Secret: dex-secret
+    - Authorization URL: http://dex:5556/dex/auth
+    - Token URL: http://dex:5556/dex/token
 
-## Anwendung Testen
+## Testing the Application
 
-1. Demo App aufrufen: http://localhost:3000
-2. "Login" klicken
-3. "Dex" als Identity Provider auswählen
-4. Mock-Credentials von Dex verwenden
-5. Rollenverteilung und Benutzerinfo beobachten
+1. Open the Demo App: http://localhost:3000
+2. Click "Login"
+3. Select "Dex" as the Identity Provider
+4. Use Dex mock credentials
+5. Observe role assignment and user info
 
-## Entwicklung
+## Development
 
 ```bash
-# Dependencies installieren
+# Install dependencies
 npm ci
 
-# Im Entwicklungsmodus starten
+# Start in development mode
 npm run dev
 
-# Tests ausführen
+# Run tests
 npm test
 ```
 
-## Projektstruktur
+## Project Structure
 
 ```plaintext
 .
-├── app.mjs                 # Hauptanwendungsdatei
-├── docker-compose.yml      # Docker Services Konfiguration
-├── realm.json             # Keycloak Realm Konfiguration
-├── dex-config.yaml        # Dex IdP Konfiguration
-├── .env                   # Umgebungsvariablen
-└── package.json           # Node.js Dependencies
+├── app.mjs                 # Main application file
+├── docker-compose.yml      # Docker services configuration
+├── realm.json              # Keycloak realm configuration
+├── dex-config.yaml         # Dex IdP configuration
+├── .env                    # Environment variables
+└── package.json            # Node.js dependencies
 ```
 
-## Fehlerbehebung
+## Troubleshooting
 
-Container Logs überprüfen:
+Check container logs:
 ```bash
 docker-compose logs keycloak
 docker-compose logs dex
 docker-compose logs app
 ```
 
-Netzwerkverbindung prüfen:
+Check network connection:
 ```bash
 docker-compose exec app curl -v http://keycloak:8080/auth/realms/example-realm
 ```
 
-Container Status prüfen:
+Check container status:
 ```bash
 docker-compose ps
 ```
 
-## Architektur Details
+## Architecture Details
 
-### Authentifizierungsfluss
+### Authentication Flow
 
-1. Benutzer ruft die Demo App auf
-2. Weiterleitung zu Keycloak
-3. Benutzer wählt Dex als Identity Provider
-4. Authentifizierung bei Dex
-5. Dex sendet Token an Keycloak
-6. Keycloak erstellt Session und sendet Token an App
-7. App validiert Token und erstellt User Session
+1. User accesses the Demo App
+2. Redirect to Keycloak
+3. User selects Dex as the Identity Provider
+4. Authentication at Dex
+5. Dex sends token to Keycloak
+6. Keycloak creates session and sends token to the app
+7. App validates token and creates user session
 
-### Sicherheitsaspekte
+### Security Aspects
 
-- Alle Kommunikation läuft über HTTPS (in Produktion)
-- Token-basierte Authentifizierung
-- Secure Session Management
-- CSRF Protection
-- XSS Prevention durch Helmet
+- All communication runs over HTTPS (in production)
+- Token-based authentication
+- Secure session management
+- CSRF protection
+- XSS prevention through Helmet
 
-## Lizenz
+## License
 
 MIT
 
-## Mitwirken
+## Contributing
 
-Pull Requests sind willkommen. Für größere Änderungen bitte zuerst ein Issue erstellen.
+Pull requests are welcome. For major changes, please open an issue first.
