@@ -46,7 +46,7 @@ async function configureOIDC() {
       throw new Error('Keycloak Konfiguration fehlt in .env');
     }
 
-    const issuerUrl = `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}`;
+    const issuerUrl = `${process.env.KEYCLOAK_BASE_URL}/auth/realms/${process.env.KEYCLOAK_REALM}`;
     console.log('Versuche Keycloak Issuer zu entdecken:', issuerUrl);
     
     const keycloakIssuer = await Issuer.discover(issuerUrl);
@@ -196,18 +196,31 @@ async function getUserRoles(userId) {
 async function testKeycloakConnection() {
   try {
     const response = await fetch(
-      `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}/.well-known/openid-configuration`
+      `${process.env.KEYCLOAK_BASE_URL}/auth/realms/${process.env.KEYCLOAK_REALM}/.well-known/openid-configuration`
     );
+    
+    // Verbesserte Fehlerbehandlung
+    if (!response.ok) {
+      console.error('HTTP Status:', response.status);
+      const text = await response.text();
+      console.error('Response Body:', text);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
     console.log('Keycloak OpenID Configuration:', data);
   } catch (error) {
     console.error('Keycloak Verbindungsfehler:', error);
+    throw error;  // Weitergabe des Fehlers
   }
 }
 
 // Server Start mit Fehlerbehandlung
 async function startServer() {
   try {
+    console.log('Warte 5 Sekunden auf Keycloak-Start...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
     await testKeycloakConnection();
     await configureOIDC();
     

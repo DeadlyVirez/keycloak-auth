@@ -1,43 +1,60 @@
 ---
 services:
-  keycloak-db:
-    image: postgres:15
-    container_name: keycloak-db
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
-    volumes:
-      - keycloak-db:/var/lib/postgresql/data
-    networks:
-      - keycloak-network
-
   keycloak:
-    image: quay.io/keycloak/keycloak:22.0.1
+    image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
     restart: unless-stopped
-    depends_on:
-      - keycloak-db
     environment:
-      KC_DB: postgres
-      KC_DB_URL_HOST: keycloak-db
-      KC_DB_URL_DATABASE: keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HOSTNAME: localhost
       KC_HTTP_RELATIVE_PATH: /auth
-      KC_DB_URL_PROPERTIES: "?validateOnMigrate=false"
     command:
       - "start-dev"
       - "--import-realm"
-    volumes:
-      - ./realm.json:/opt/keycloak/data/import/realm.json
     ports:
       - "8080:8080"
     networks:
       - keycloak-network
+    volumes:
+      - ./realm.json:/opt/keycloak/data/import/realm.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://keycloak:8080/auth/realms/example-realm"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  keycloak-health:
+    image: curlimages/curl:latest
+    depends_on:
+      - keycloak
+    restart: "no"
+    networks:
+      - keycloak-network
+    command: |
+      /bin/sh -c '
+      while true; do
+        if curl -sf http://keycloak:8080/auth/realms/example-realm > /dev/null; then
+          echo "Realm gefunden, warte 5 Sekunden zur Stabilisierung..."
+          sleep 5
+          
+          # Finale Überprüfung
+          if curl -sf http://keycloak:8080/auth/realms/example-realm > /dev/null; then
+            echo "Keycloak ist bereit und stabil!"
+            exit 0
+          fi
+        fi
+        echo "Warte auf Keycloak..."
+        sleep 5
+      done
+      '
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://keycloak:8080/auth/realms/example-realm > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
   dex:
     image: ghcr.io/dexidp/dex:v2.35.3
@@ -55,14 +72,16 @@ services:
     container_name: example-app
     restart: unless-stopped
     depends_on:
-      - keycloak
-      - dex
+      keycloak-health:
+        condition: service_completed_successfully
+      dex:
+        condition: service_started
     environment:
       KEYCLOAK_BASE_URL: http://keycloak:8080
       KEYCLOAK_REALM: example-realm
       KEYCLOAK_CLIENT_ID: example-app
       KEYCLOAK_CLIENT_SECRET: your-client-secret
-      CALLBACK_URL: http://localhost:3000/auth/callback
+      CALLBACK_URL: http://example-app:3000/auth/callback
       SESSION_SECRET: my-secret
     ports:
       - "3000:3000"
