@@ -18,10 +18,10 @@ process.on('uncaughtException', (error) => {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Sicherheits-Headers
+// Security-Headers
 app.use(helmet());
 
-// Session-Konfiguration mit besserer Sicherheit
+// Session-Configuration with better security
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -36,21 +36,21 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// OIDC Konfiguration mit Fehlerbehandlung
+// OIDC Configuration with better error handling
 async function configureOIDC() {
   try {
     const { Issuer, generators } = await import('openid-client');
     
-    console.log('Prüfe Umgebungsvariablen...');
+    console.log('Check environment variables...');
     if (!process.env.KEYCLOAK_BASE_URL || !process.env.KEYCLOAK_REALM) {
-      throw new Error('Keycloak Konfiguration fehlt in .env');
+      throw new Error('Keycloak Configuration missing in .env');
     }
 
     const issuerUrl = `${process.env.KEYCLOAK_BASE_URL}/auth/realms/${process.env.KEYCLOAK_REALM}`;
-    console.log('Versuche Keycloak Issuer zu entdecken:', issuerUrl);
+    console.log('Try to discover Keycloak Issuer:', issuerUrl);
     
     const keycloakIssuer = await Issuer.discover(issuerUrl);
-    console.log('Keycloak Issuer gefunden:', keycloakIssuer.metadata.issuer);
+    console.log('Keycloak Issuer found:', keycloakIssuer.metadata.issuer);
     
     passport.use('keycloak',
       new Strategy(
@@ -63,12 +63,12 @@ async function configureOIDC() {
           clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
           callbackURL: process.env.CALLBACK_URL,
           scope: 'openid profile email',
-          // Zusätzliche Debug-Optionen
+          // Additional debug options
           passReqToCallback: true,
           proxy: true
         },
         (req, issuer, sub, profile, jwtClaims, accessToken, refreshToken, done) => {
-          console.log('Auth Callback erreicht mit Profil:', profile);
+          console.log('Auth Callback got with profile:', profile);
           profile.accessToken = accessToken;
           profile.refreshToken = refreshToken;
           profile.jwtClaims = jwtClaims;
@@ -79,7 +79,7 @@ async function configureOIDC() {
 
     return { client: keycloakIssuer.Client };
   } catch (error) {
-    console.error('OIDC Konfigurationsfehler:', error);
+    console.error('OIDC Configurationerror:', error);
     if (error.response) {
       console.error('Response Status:', error.response.status);
       console.error('Response Body:', await error.response.text());
@@ -104,25 +104,25 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Authentication Routes mit Fehlerbehandlung
+// Authentication Routes with better error handling
 app.get('/login', (req, res, next) => {
   passport.authenticate('keycloak')(req, res, next);
 });
 
-// Debug Route für OAuth Callback
+// Debug Route for OAuth Callback
 app.get('/auth/callback', 
   (req, res, next) => {
-    console.log('Auth Callback erreicht mit Query:', req.query);
+    console.log('Auth Callback got with Query:', req.query);
     passport.authenticate('keycloak', { 
       failureRedirect: '/',
       failureMessage: true,
-      // Debug Optionen
+      // Debug Options
       session: true,
       failWithError: true
     })(req, res, next);
   },
   (req, res) => {
-    console.log('Auth erfolgreich, User:', req.user);
+    console.log('Auth successful, User:', req.user);
     res.redirect('/protected');
   },
   (error, req, res, next) => {
@@ -131,24 +131,24 @@ app.get('/auth/callback',
   }
 );
 
-// Logout Route mit Fehlerbehandlung
+// Logout Route with better error handling
 app.get('/logout', (req, res) => {
   try {
     req.logout(() => {
       req.session.destroy((err) => {
         if (err) {
-          console.error('Session Zerstörungsfehler:', err);
+          console.error('Session destroy error:', err);
         }
         res.redirect('/');
       });
     });
   } catch (error) {
-    console.error('Logout Fehler:', error);
+    console.error('Logout Error:', error);
     res.redirect('/');
   }
 });
 
-// Protected Route mit Fehlerbehandlung
+// Protected Route with better error handling
 app.get('/protected', ensureAuthenticated, async (req, res) => {
   try {
     const user = req.user;
@@ -162,7 +162,7 @@ app.get('/protected', ensureAuthenticated, async (req, res) => {
       <p><a href="/logout">Logout</a></p>
     `);
   } catch (error) {
-    console.error('Protected Route Fehler:', error);
+    console.error('Protected Route Error:', error);
     res.status(500).send('Internal Server Error');
   }
 });
@@ -172,7 +172,7 @@ function ensureAuthenticated(req, res, next) {
   res.redirect('/login');
 }
 
-// Keycloak Admin Client mit Fehlerbehandlung
+// Keycloak Admin Client with better error handling
 async function getUserRoles(userId) {
   try {
     const { default: KeycloakAdminClient } = await import('@keycloak/keycloak-admin-client');
@@ -194,19 +194,19 @@ async function getUserRoles(userId) {
 
     return roles.map(role => role.name);
   } catch (error) {
-    console.error('Keycloak Admin API Fehler:', error);
+    console.error('Keycloak Admin API Error:', error);
     return [];
   }
 }
 
-// Temporäre Debug-Funktion
+// Temporary debugging function
 async function testKeycloakConnection() {
   try {
     const response = await fetch(
       `${process.env.KEYCLOAK_BASE_URL}/auth/realms/${process.env.KEYCLOAK_REALM}/.well-known/openid-configuration`
     );
     
-    // Verbesserte Fehlerbehandlung
+    // Improved error handling
     if (!response.ok) {
       console.error('HTTP Status:', response.status);
       const text = await response.text();
@@ -217,29 +217,29 @@ async function testKeycloakConnection() {
     const data = await response.json();
     console.log('Keycloak OpenID Configuration:', data);
   } catch (error) {
-    console.error('Keycloak Verbindungsfehler:', error);
-    throw error;  // Weitergabe des Fehlers
+    console.error('Keycloak Connection error:', error);
+    throw error;  // Give back to caller
   }
 }
 
-// Server Start mit Fehlerbehandlung
+// Server start with better error handling
 async function startServer() {
   try {
-    console.log('Warte 5 Sekunden auf Keycloak-Start...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log('Wait 3 seconds for Keycloak start...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     await testKeycloakConnection();
     await configureOIDC();
     
     const server = app.listen(PORT, () => {
-      console.log(`Server läuft auf http://localhost:${PORT}`);
+      console.log(`Server runs at http://localhost:${PORT}`);
     });
 
     // Graceful Shutdown
     process.on('SIGTERM', () => {
-      console.log('SIGTERM Signal empfangen. Server wird beendet...');
+      console.log('Got SIGTERM signal. Server will be shut down...');
       server.close(() => {
-        console.log('Server wurde beendet');
+        console.log('Server was shut down. Good bye!');
         process.exit(0);
       });
     });

@@ -20,6 +20,8 @@ This project demonstrates the implementation of identity brokering in Keycloak w
 - [ ] Check user creation and registration process
 - [ ] Check if role mapping works correctly
 - [ ] Check if users get created as duplicates
+- [ ] FIX: InternalOAuthError: Failed to obtain access token
+- [ ] Switch to 'host' networking to avoid docker errors (switch to localhost everywhere instead of container names)
 
 ## Architecture
 
