@@ -1,0 +1,12 @@
+{
+  "keycloak": {
+    "realm": "your-realm",
+    "baseUrl": "http://localhost:8080",
+    "clientId": "your-client-id",
+    "clientSecret": "your-client-secret"
+  },
+  "app": {
+    "port": 3000,
+    "callbackUrl": "http://localhost:3000/auth/callback"
+  }
+}
