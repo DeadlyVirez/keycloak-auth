@@ -16,12 +16,12 @@ This project demonstrates the implementation of identity brokering in Keycloak w
 - [x] Create working Dex instance + config
 - [x] Use version-pinning
 - [ ] Implement role mapping from Dex JWT token
-- [ ] Fix wrong callback/auth URL (possibly related to Docker deployment)
-- [ ] Check user creation and registration process
+- [x] Fix wrong callback/auth URL (possibly related to Docker deployment)
+- [x] Check user creation and registration process
 - [ ] Check if role mapping works correctly
 - [ ] Check if users get created as duplicates
-- [ ] FIX: InternalOAuthError: Failed to obtain access token
-- [ ] Switch to 'host' networking to avoid docker errors (switch to localhost everywhere instead of container names)
+- [x] FIX: InternalOAuthError: Failed to obtain access token
+- [x] Switch to 'host' networking to avoid docker errors (switch to localhost everywhere instead of container names)
 
 ## Architecture
 
