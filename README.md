@@ -51,6 +51,8 @@ cd keycloak-auth
 docker-compose up --build
 ```
 
+3. Go to `docker/keycloak/README.md` and follow the steps there
+
 ## Testing the Application
 
 1. Open the Demo App: http://localhost:3000

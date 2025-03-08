@@ -4,6 +4,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { Strategy } from 'passport-openidconnect';
 import helmet from 'helmet';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -63,15 +64,25 @@ async function configureOIDC() {
           clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
           callbackURL: process.env.CALLBACK_URL,
           scope: 'openid profile email',
-          // Additional debug options
           passReqToCallback: true,
-          proxy: true
+          proxy: true,
+          skipUserProfile: true,
+          scope: ['openid', 'profile', 'email'],
+          pkce: false,
+          state: true,
+          verify: true
         },
         (req, issuer, sub, profile, jwtClaims, accessToken, refreshToken, done) => {
           console.log('Auth Callback got with profile:', profile);
+          try {
+            const decodedClaims = jwt.decode(jwtClaims);
+            profile.jwtClaims = decodedClaims;
+          } catch (err) {
+            console.error('Fehler beim Decodieren der JWT Claims:', err);
+            profile.jwtClaims = {};
+          }
           profile.accessToken = accessToken;
           profile.refreshToken = refreshToken;
-          profile.jwtClaims = jwtClaims;
           return done(null, profile);
         }
       )
@@ -132,32 +143,34 @@ app.get('/auth/callback',
 );
 
 // Logout Route with better error handling
-app.get('/logout', (req, res) => {
-  try {
-    req.logout(() => {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Session destroy error:', err);
-        }
-        res.redirect('/');
-      });
+app.get('/logout', (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      console.error('Logout Error:', err);
+      return next(err);
+    }
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destroy error:', err);
+        return next(err);
+      }
+      res.clearCookie('connect.sid');
+      res.redirect('/');
     });
-  } catch (error) {
-    console.error('Logout Error:', error);
-    res.redirect('/');
-  }
+  });
 });
 
 // Protected Route with better error handling
 app.get('/protected', ensureAuthenticated, async (req, res) => {
   try {
     const user = req.user;
-    const roles = await getUserRoles(user.jwtClaims.sub);
+    // Hier wird angenommen, dass jwtClaims die Werte "sub" und "preferred_username" enthält.
+    const roles = await getUserRoles(user.jwtClaims.sub, user.jwtClaims.preferred_username, user.jwtClaims.email);
     
     res.send(`
       <h1>Protected Resource</h1>
-      <p>Welcome, ${user.displayName}</p>
-      <p>Your email: ${user.email}</p>
+      <p>Welcome, ${user.displayName || user.jwtClaims.name}</p>
+      <p>Your email: ${user.email || user.jwtClaims.email}</p>
       <p>Your roles: ${JSON.stringify(roles)}</p>
       <p><a href="/logout">Logout</a></p>
     `);
@@ -169,16 +182,17 @@ app.get('/protected', ensureAuthenticated, async (req, res) => {
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
-  res.redirect('/login');
+  const host = req.headers['host'] || 'localhost:3000';
+  res.redirect(`http://${host}/login`);
 }
 
 // Keycloak Admin Client with better error handling
-async function getUserRoles(userId) {
+async function getUserRoles(userId, username, email) {
   try {
     const { default: KeycloakAdminClient } = await import('@keycloak/keycloak-admin-client');
-    
+
     const adminClient = new KeycloakAdminClient({
-      baseUrl: process.env.KEYCLOAK_BASE_URL,
+      baseUrl: `${process.env.KEYCLOAK_BASE_URL}/auth`, // Verwaltung endpunkt
       realmName: process.env.KEYCLOAK_REALM
     });
 
@@ -188,10 +202,33 @@ async function getUserRoles(userId) {
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET
     });
 
-    const roles = await adminClient.users.listRealmRoleMappings({
-      id: userId
-    });
+    // Zuerst per ID suchen
+    let user = await adminClient.users.findOne({ id: userId });
+    if (!user) {
+      console.warn(`User nicht gefunden mit ID: ${userId}. Versuch per Username...`);
+      if (username) {
+        const usersFound = await adminClient.users.find({ username });
+        if (usersFound.length > 0) {
+          user = usersFound[0];
+        }
+      }
+    }
 
+    // Falls noch immer nicht gefunden, per E-Mail suchen
+    if (!user && email) {
+      console.warn(`User nicht gefunden per ID und Username, versuche per Email: ${email}`);
+      const usersFound = await adminClient.users.find({ email });
+      if (usersFound.length > 0) {
+        user = usersFound[0];
+      }
+    }
+
+    if (!user) {
+      console.error(`User nicht gefunden weder mit ID: ${userId}, Username: ${username} noch Email: ${email}`);
+      return [];
+    }
+
+    const roles = await adminClient.users.listRealmRoleMappings({ id: user.id });
     return roles.map(role => role.name);
   } catch (error) {
     console.error('Keycloak Admin API Error:', error);
