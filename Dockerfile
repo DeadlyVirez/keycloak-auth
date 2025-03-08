@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a parent image
-FROM node:20
+FROM node:18
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "app.js"]
+CMD ["node", "app.mjs"]

@@ -13,7 +13,7 @@ services:
       - keycloak-network
 
   keycloak:
-    image: quay.io/keycloak/keycloak:latest
+    image: quay.io/keycloak/keycloak:22.0.1
     container_name: keycloak
     restart: unless-stopped
     depends_on:
@@ -26,15 +26,17 @@ services:
       KC_DB_PASSWORD: keycloak
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_PROXY: edge
       KC_HOSTNAME: localhost
+      KC_HTTP_RELATIVE_PATH: /auth
     command:
       - "start-dev"
       - "--import-realm"
     volumes:
-      - ./keycloak-realm.json:/opt/keycloak/data/import/keycloak-realm.json
+      - ./realm.json:/opt/keycloak/data/import/realm.json
     ports:
       - "8080:8080"
+    networks:
+      - keycloak-network
 
   dex:
     image: ghcr.io/dexidp/dex:v2.35.3
@@ -44,6 +46,8 @@ services:
     volumes:
       - ./dex-config.yaml:/etc/dex/config.yaml
     command: ["dex", "serve", "/etc/dex/config.yaml"]
+    networks:
+      - keycloak-network
 
   app:
     build: .
