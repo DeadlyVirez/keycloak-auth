@@ -25,7 +25,7 @@ router.get(
     res.redirect('/protected');
   },
   (error, req, res, next) => {
-    console.error('Auth Fehler:', error);
+    console.error('Auth error:', error);
     res.redirect('/');
   }
 );

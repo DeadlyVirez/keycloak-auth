@@ -3,7 +3,7 @@ export async function getUserRoles(userId, username, email) {
     const { default: KeycloakAdminClient } = await import('@keycloak/keycloak-admin-client');
 
     const adminClient = new KeycloakAdminClient({
-      baseUrl: `${process.env.KEYCLOAK_BASE_URL}/auth`, // Verwaltung endpunkt
+      baseUrl: `${process.env.KEYCLOAK_BASE_URL}/auth`,
       realmName: process.env.KEYCLOAK_REALM
     });
 
@@ -13,7 +13,7 @@ export async function getUserRoles(userId, username, email) {
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET
     });
 
-    // Zuerst per ID suchen
+    // Look up user by ID first
     let user = await adminClient.users.findOne({ id: userId });
     if (!user) {
       console.warn(`User not found with ID: ${userId}. Trying by username...`);
@@ -25,7 +25,7 @@ export async function getUserRoles(userId, username, email) {
       }
     }
 
-    // Falls noch immer nicht gefunden, per E-Mail suchen
+    // If still not found, try by email
     if (!user && email) {
       console.warn(`User not found by ID or username, trying by email: ${email}`);
       const usersFound = await adminClient.users.find({ email });
