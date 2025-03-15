@@ -65,7 +65,7 @@ services:
 
   app:
     build: .
-    container_name: example-app
+    container_name: keycloak-auth
     restart: unless-stopped
     depends_on:
       keycloak-health:

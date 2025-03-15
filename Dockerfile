@@ -10,8 +10,8 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy the entire source directory
-COPY src/ ./src/
+# Copy the entire project
+COPY . .
 
 # Expose the port the app runs on
 EXPOSE 3000
