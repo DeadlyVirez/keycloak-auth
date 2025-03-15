@@ -4,6 +4,8 @@ import session from 'express-session';
 import passport from 'passport';
 import helmet from 'helmet';
 import { configureOIDC } from './config/keycloak-config.mjs';
+import authRoutes from './routes/auth.mjs';
+import protectedRoutes from './routes/protected.mjs';
 
 dotenv.config();
 
@@ -52,76 +54,9 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Authentication Routes with better error handling
-app.get('/login', (req, res, next) => {
-  passport.authenticate('keycloak')(req, res, next);
-});
-
-// Debug Route for OAuth Callback
-app.get('/auth/callback', 
-  (req, res, next) => {
-    console.log('Auth Callback got with Query:', req.query);
-    passport.authenticate('keycloak', { 
-      failureRedirect: '/',
-      failureMessage: true,
-      // Debug Options
-      session: true,
-      failWithError: true
-    })(req, res, next);
-  },
-  (req, res) => {
-    console.log('Auth successful, User:', req.user);
-    res.redirect('/protected');
-  },
-  (error, req, res, next) => {
-    console.error('Auth Fehler:', error);
-    res.redirect('/');
-  }
-);
-
-// Logout Route with better error handling
-app.get('/logout', (req, res, next) => {
-  req.logout((err) => {
-    if (err) {
-      console.error('Logout Error:', err);
-      return next(err);
-    }
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Session destroy error:', err);
-        return next(err);
-      }
-      res.clearCookie('connect.sid');
-      res.redirect('/');
-    });
-  });
-});
-
-// Protected Route with better error handling
-app.get('/protected', ensureAuthenticated, async (req, res) => {
-  try {
-    const user = req.user;
-    // Hier wird angenommen, dass jwtClaims die Werte "sub" und "preferred_username" enthält.
-    const roles = await getUserRoles(user.jwtClaims.sub, user.jwtClaims.preferred_username, user.jwtClaims.email);
-    
-    res.send(`
-      <h1>Protected Resource</h1>
-      <p>Welcome, ${user.displayName || user.jwtClaims.name}</p>
-      <p>Your email: ${user.email || user.jwtClaims.email}</p>
-      <p>Your roles: ${JSON.stringify(roles)}</p>
-      <p><a href="/logout">Logout</a></p>
-    `);
-  } catch (error) {
-    console.error('Protected Route Error:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  const host = req.headers['host'] || 'localhost:3000';
-  res.redirect(`http://${host}/login`);
-}
+// Register extracted routes
+app.use(authRoutes);
+app.use(protectedRoutes);
 
 // Keycloak Admin Client with better error handling
 async function getUserRoles(userId, username, email) {
