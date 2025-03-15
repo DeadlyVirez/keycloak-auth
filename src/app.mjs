@@ -73,12 +73,12 @@ async function configureOIDC() {
           verify: true
         },
         (req, issuer, sub, profile, jwtClaims, accessToken, refreshToken, done) => {
-          console.log('Auth Callback got with profile:', profile);
+          console.log('Auth Callback received with profile:', profile);
           try {
             const decodedClaims = jwt.decode(jwtClaims);
             profile.jwtClaims = decodedClaims;
           } catch (err) {
-            console.error('Fehler beim Decodieren der JWT Claims:', err);
+            console.error('Error decoding JWT claims:', err);
             profile.jwtClaims = {};
           }
           profile.accessToken = accessToken;
@@ -205,7 +205,7 @@ async function getUserRoles(userId, username, email) {
     // Zuerst per ID suchen
     let user = await adminClient.users.findOne({ id: userId });
     if (!user) {
-      console.warn(`User nicht gefunden mit ID: ${userId}. Versuch per Username...`);
+      console.warn(`User not found with ID: ${userId}. Trying by username...`);
       if (username) {
         const usersFound = await adminClient.users.find({ username });
         if (usersFound.length > 0) {
@@ -216,7 +216,7 @@ async function getUserRoles(userId, username, email) {
 
     // Falls noch immer nicht gefunden, per E-Mail suchen
     if (!user && email) {
-      console.warn(`User nicht gefunden per ID und Username, versuche per Email: ${email}`);
+      console.warn(`User not found by ID or username, trying by email: ${email}`);
       const usersFound = await adminClient.users.find({ email });
       if (usersFound.length > 0) {
         user = usersFound[0];
@@ -224,14 +224,14 @@ async function getUserRoles(userId, username, email) {
     }
 
     if (!user) {
-      console.error(`User nicht gefunden weder mit ID: ${userId}, Username: ${username} noch Email: ${email}`);
+      console.error(`User not found with ID: ${userId}, username: ${username} or email: ${email}`);
       return [];
     }
 
     const roles = await adminClient.users.listRealmRoleMappings({ id: user.id });
     return roles.map(role => role.name);
   } catch (error) {
-    console.error('Keycloak Admin API Error:', error);
+    console.error('Keycloak Admin API error:', error);
     return [];
   }
 }
@@ -259,31 +259,51 @@ async function testKeycloakConnection() {
   }
 }
 
-// Server start with better error handling
+// Server start with graceful error handling
 async function startServer() {
   try {
-    console.log('Wait 3 seconds for Keycloak start...');
+    console.log('Waiting 3 seconds for Keycloak to start...');
     await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    await testKeycloakConnection();
+
+    const maxRetries = 3;
+    let attempt = 0;
+    let keycloakConnected = false;
+
+    while (attempt < maxRetries && !keycloakConnected) {
+      try {
+        await testKeycloakConnection();
+        keycloakConnected = true;
+      } catch (error) {
+        attempt++;
+        console.error(`Keycloak connection attempt ${attempt} of ${maxRetries} failed:`, error);
+        if (attempt < maxRetries) {
+          console.log('Retrying in 3000ms ...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+    }
+
+    if (!keycloakConnected) {
+      console.warn('Proceeding without a successful Keycloak connection. Some functionalities may be limited.');
+    }
+
     await configureOIDC();
-    
+
     const server = app.listen(PORT, () => {
-      console.log(`Server runs at http://localhost:${PORT}`);
+      console.log(`Server running on http://localhost:${PORT}`);
     });
 
     // Graceful Shutdown
     process.on('SIGTERM', () => {
-      console.log('Got SIGTERM signal. Server will be shut down...');
+      console.log('SIGTERM received. Server shutting down...');
       server.close(() => {
-        console.log('Server was shut down. Good bye!');
+        console.log('Server has shut down. Goodbye!');
         process.exit(0);
       });
     });
-    
+
   } catch (error) {
-    console.error('Server Startfehler:', error);
-    process.exit(1);
+    console.error('Server start error:', error);
   }
 }
 

@@ -58,7 +58,7 @@ docker-compose up --build
 1. Open the Demo App: http://localhost:3000
 2. Click "Login"
 3. Select "Dex" as the Identity Provider
-4. Use Dex mock credentials
+4. Use Dex mock credentials: "test@example.com"
 5. Observe role assignment and user info
 
 ## Architecture Details
